@@ -110,7 +110,7 @@ func getCloudPath(clientset *kubernetes.Clientset, resourceNamespace, resourceTy
 	case "services":
 		fallthrough
 	case "svc":
-		svc, err := clientset.CoreV1().Services("default").Get(context.TODO(), resourceName, metav1.GetOptions{})
+		svc, err := clientset.CoreV1().Services(resourceNamespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 		if err != nil {
 			return "", err
 		}
