@@ -3,19 +3,22 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	restclient "k8s.io/client-go/rest"
 )
 
 const nodeIDPrefix = "digitalocean://"
 const lbaasAnnotation = "kubernetes.digitalocean.com/load-balancer-id"
+const hostnameSuffix = ".k8s.ondigitalocean.com"
 
 type Resource interface {
-	CloudPath(context.Context, *kubernetes.Clientset, string, string) (string, error)
+	CloudPath(context.Context, *restclient.Config, kubernetes.Interface, string, string) (string, error)
 }
 
 type Cluster struct{}
@@ -56,11 +59,20 @@ func ParseResource(name string) Resource {
 	return nil
 }
 
-func (c *Cluster) CloudPath(ctx context.Context, clientset *kubernetes.Clientset, namespace, name string) (string, error) {
-	return "", fmt.Errorf("not implemented")
+func (c *Cluster) CloudPath(ctx context.Context, clientConfig *restclient.Config, clientset kubernetes.Interface, namespace, name string) (string, error) {
+	endpoint, err := url.Parse(clientConfig.Host)
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasSuffix(endpoint.Host, hostnameSuffix) {
+		return "", fmt.Errorf("the cluster does not seem to be a DOKS cluster")
+	}
+
+	id := strings.TrimSuffix(endpoint.Host, hostnameSuffix)
+	return fmt.Sprintf("kubernetes/clusters/%s", id), nil
 }
 
-func (n *Node) CloudPath(ctx context.Context, clientset *kubernetes.Clientset, namespace, name string) (string, error) {
+func (n *Node) CloudPath(ctx context.Context, clientConfig *restclient.Config, clientset kubernetes.Interface, namespace, name string) (string, error) {
 	node, err := clientset.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
@@ -74,7 +86,7 @@ func (n *Node) CloudPath(ctx context.Context, clientset *kubernetes.Clientset, n
 	return fmt.Sprintf("droplets/%s", id), nil
 }
 
-func (s *Service) CloudPath(ctx context.Context, clientset *kubernetes.Clientset, namespace, name string) (string, error) {
+func (s *Service) CloudPath(ctx context.Context, clientConfig *restclient.Config, clientset kubernetes.Interface, namespace, name string) (string, error) {
 	svc, err := clientset.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
@@ -93,7 +105,7 @@ func (s *Service) CloudPath(ctx context.Context, clientset *kubernetes.Clientset
 	return fmt.Sprintf("networking/load_balancers/%s", id), nil
 }
 
-func (pv *PersistentVolume) CloudPath(ctx context.Context, clientset *kubernetes.Clientset, namespace, name string) (string, error) {
+func (pv *PersistentVolume) CloudPath(ctx context.Context, clientConfig *restclient.Config, clientset kubernetes.Interface, namespace, name string) (string, error) {
 	pvObj, err := clientset.CoreV1().PersistentVolumes().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
@@ -109,7 +121,7 @@ func (pv *PersistentVolume) CloudPath(ctx context.Context, clientset *kubernetes
 	return "volumes", nil
 }
 
-func (pvc *PersistentVolumeClaim) CloudPath(ctx context.Context, clientset *kubernetes.Clientset, namespace, name string) (string, error) {
+func (pvc *PersistentVolumeClaim) CloudPath(ctx context.Context, clientConfig *restclient.Config, clientset kubernetes.Interface, namespace, name string) (string, error) {
 	pvcObj, err := clientset.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return "", err

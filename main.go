@@ -15,6 +15,8 @@ import (
 
 const cloudBase = "https://cloud.digitalocean.com/"
 
+var errUsage = fmt.Errorf("usage: kubectl dobrowse <type> <name>\n\n\texample: kubectl dobrowse service main-load-balancer")
+
 func main() {
 	app := &cli.App{
 		Name:   "kubectl-dobrowse",
@@ -44,12 +46,13 @@ func main() {
 }
 
 func rootCmd(c *cli.Context) error {
-	if c.Args().Len() != 2 {
-		return fmt.Errorf("usage: kubectl dobrowse <type> <name>\n\n\texample: kubectl dobrowse service main-load-balancer")
+	if c.Args().Len() < 1 {
+		return errUsage
 	}
 
+	kubeConfigPath := c.String("kubeconfig")
 	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: c.String("kubeconfig")},
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeConfigPath},
 		&clientcmd.ConfigOverrides{},
 	)
 
@@ -59,6 +62,10 @@ func rootCmd(c *cli.Context) error {
 	}
 	typ := c.Args().Get(0)
 	name := c.Args().Get(1)
+
+	if typ != "cluster" && name == "" {
+		return errUsage
+	}
 
 	resource := ParseResource(typ)
 	if resource == nil {
@@ -80,7 +87,7 @@ func browse(kubeConfig clientcmd.ClientConfig, resource Resource, namespace, nam
 		return err
 	}
 
-	path, err := resource.CloudPath(context.Background(), clientset, namespace, name)
+	path, err := resource.CloudPath(context.Background(), clientConfig, clientset, namespace, name)
 	if err != nil {
 		return err
 	}
