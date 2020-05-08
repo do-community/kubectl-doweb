@@ -32,6 +32,6 @@ jobs:
       
     - name: Build
       run: |
-        cd cmd/kubectl-dobrowse
+        cd cmd/kubectl-doweb
         go build -v .
 
