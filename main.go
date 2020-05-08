@@ -1,125 +1,61 @@
-package main
+package kubectldoweb
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"io"
 
-	"github.com/skratchdot/open-golang/open"
-	"github.com/urfave/cli/v2"
 	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 const cloudBase = "https://cloud.digitalocean.com/"
 
-var errHelp = fmt.Errorf("errHelp")
+var ErrMissingArgument = fmt.Errorf("missing argument")
 
-func main() {
-	run(os.Args)
-}
-
-func run(args []string) {
-	app := &cli.App{
-		Name:  "kubectl-dobrowse",
-		Usage: "a kubectl plugin for opening DigitalOcean resources in a web browser",
-		UsageText: `kubectl dobrowse <type> <name>
-
-EXAMPLES:
-
-   kubectl dobrowse service main-load-balancer
-   kubectl dobrowse cluster
-
-SUPPORTED TYPES:
-
-   cluster, node, service, persistentvolume, persistentvolumeclaim`,
-		Action: rootCmd,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "kubeconfig",
-				Usage: "absolute path to the kubeconfig file",
-				Value: defaultKubeconfigPath(),
-			},
-			&cli.StringFlag{
-				Name:        "namespace",
-				Usage:       "kubernetes object namespace",
-				Value:       "",
-				Aliases:     []string{"n"},
-				DefaultText: "default namespace in kubeconfig",
-			},
-		},
-	}
-
-	err := app.Run(args)
-	if err != nil {
-		if err == errHelp {
-			app.Run([]string{"", "help"})
-		} else {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		os.Exit(1)
-	}
-}
-
-func rootCmd(c *cli.Context) error {
-	if c.Args().Len() < 1 {
-		return errHelp
-	}
-
-	kubeConfigPath := c.String("kubeconfig")
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeConfigPath},
-		&clientcmd.ConfigOverrides{},
-	)
-
-	namespace := c.String("namespace")
+func Run(ctx context.Context, writer io.Writer, kubeConfig clientcmd.ClientConfig, namespace, typ, name string) (string, error) {
+	// if a namespace is not explicitly provided, use the default set in kube config
 	if namespace == "" {
 		namespace, _, _ = kubeConfig.Namespace()
 	}
 	if namespace == "" {
-		fmt.Println("could not determine namespace")
-		return errHelp
+		fmt.Println("could not determine namespace using the provided kube config")
+		return "", ErrMissingArgument
 	}
-	typ := c.Args().Get(0)
-	name := c.Args().Get(1)
 
 	clientConfig, err := kubeConfig.ClientConfig()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	clientset, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	cp := &DOCloudPather{
 		clientConfig: clientConfig,
 		clientset:    clientset,
-		output:       os.Stdout,
+		output:       writer,
 	}
 
-	fmt.Printf("opening %s %s (namespace %s)\n", typ, name, namespace)
-	path, err := cloudPatherWithType(context.Background(), cp, typ, namespace, name)
+	fmt.Fprintf(writer, "opening %s %s (namespace %s)\n", typ, name, namespace)
+	path, err := cloudPatherByType(ctx, cp, typ, namespace, name)
 	if err != nil {
-		return err
+		return "", err
 	}
-	url := fmt.Sprintf("%s%s", cloudBase, path)
 
-	open.Run(url)
-	return nil
+	return path, nil
 }
 
-func cloudPatherWithType(ctx context.Context, cp CloudPather, typ, namespace, name string) (string, error) {
+func cloudPatherByType(ctx context.Context, cp CloudPather, typ, namespace, name string) (string, error) {
 	// cluster is the only type that doesn't take a name
 	if typ == "cluster" {
 		return cp.Cluster(ctx)
 	}
 
 	if name == "" {
-		return "", errHelp
+		return "", ErrMissingArgument
 	}
 
 	switch typ {
@@ -154,13 +90,4 @@ func cloudPatherWithType(ctx context.Context, cp CloudPather, typ, namespace, na
 	default:
 		return "", fmt.Errorf("unknown type %s", typ)
 	}
-}
-
-func defaultKubeconfigPath() string {
-	home := homedir.HomeDir()
-	if home == "" {
-		return ""
-	}
-
-	return filepath.Join(home, ".kube", "config")
 }

@@ -1,14 +1,14 @@
 ```
 NAME:
-   kubectl-dobrowse - a kubectl plugin for opening DigitalOcean resources in a web browser
+   kubectl-doweb - a kubectl plugin for opening DigitalOcean resources in a web browser
 
 USAGE:
-   kubectl dobrowse <type> <name>
+   kubectl doweb <type> <name>
 
 EXAMPLES:
 
-   kubectl dobrowse service main-load-balancer
-   kubectl dobrowse cluster
+   kubectl doweb service main-load-balancer
+   kubectl doweb cluster
 
 SUPPORTED TYPES:
 

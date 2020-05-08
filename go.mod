@@ -1,4 +1,4 @@
-module github.com/kamaln7/kubectl-dobrowse
+module github.com/kamaln7/kubectldoweb
 
 go 1.14
 

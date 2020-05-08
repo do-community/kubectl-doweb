@@ -1,4 +1,4 @@
-package main
+package kubectldoweb
 
 import (
 	"testing"
@@ -178,7 +178,7 @@ func Test_cloudPatherWithType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.typ, func(t *testing.T) {
-			got, err := cloudPatherWithType(context.Background(), cp, tt.typ, "namespace", tt.name)
+			got, err := cloudPatherByType(context.Background(), cp, tt.typ, "namespace", tt.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("cloudPatherWithType() error = %v, wantErr %v", err, tt.wantErr)
 				return
