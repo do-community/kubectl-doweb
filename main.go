@@ -9,6 +9,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+type Runner func(ctx context.Context, writer io.Writer, kubeConfig clientcmd.ClientConfig, namespace, typ, name string) (string, error)
+
 const cloudBase = "https://cloud.digitalocean.com/"
 
 var ErrMissingArgument = fmt.Errorf("missing argument")

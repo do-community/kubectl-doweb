@@ -15,13 +15,15 @@ import (
 
 const cloudBase = "https://cloud.digitalocean.com/"
 
+type opener func(input string) error
+
 var errHelp = fmt.Errorf("errHelp")
 
 func main() {
 	runCLI(os.Args)
 }
 
-func newApp() *cli.App {
+func newApp(rootCmd cli.ActionFunc) *cli.App {
 	return &cli.App{
 		Name:  "kubectl-doweb",
 		Usage: "a kubectl plugin for opening DigitalOcean resources in a web browser",
@@ -34,7 +36,7 @@ EXAMPLES:
 
 SUPPORTED TYPES:
 
-   cluster, node, service, persistentvolume, persistentvolumeclaim`,
+   cluster, node (no), service (svc), persistentvolume (pv), persistentvolumeclaim (pvc)`,
 		Action: rootCmd,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -54,7 +56,7 @@ SUPPORTED TYPES:
 }
 
 func runCLI(args []string) {
-	app := newApp()
+	app := newApp(newRootCmd(kubectldoweb.Run, open.Run))
 
 	err := app.Run(args)
 	if err != nil {
@@ -67,28 +69,30 @@ func runCLI(args []string) {
 	}
 }
 
-func rootCmd(c *cli.Context) error {
-	if c.Args().Len() < 1 {
-		return errHelp
+func newRootCmd(runner kubectldoweb.Runner, opnr opener) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		if c.Args().Len() < 1 {
+			return errHelp
+		}
+
+		kubeConfigPath := c.String("kubeconfig")
+		kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeConfigPath},
+			&clientcmd.ConfigOverrides{},
+		)
+
+		namespace := c.String("namespace")
+		typ := c.Args().Get(0)
+		name := c.Args().Get(1)
+
+		path, err := runner(c.Context, os.Stderr, kubeConfig, namespace, typ, name)
+		if err != nil {
+			return err
+		}
+
+		url := fmt.Sprintf("%s%s", cloudBase, path)
+		return opnr(url)
 	}
-
-	kubeConfigPath := c.String("kubeconfig")
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeConfigPath},
-		&clientcmd.ConfigOverrides{},
-	)
-
-	namespace := c.String("namespace")
-	typ := c.Args().Get(0)
-	name := c.Args().Get(1)
-
-	path, err := kubectldoweb.Run(c.Context, os.Stderr, kubeConfig, namespace, typ, name)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("%s%s", cloudBase, path)
-	return open.Run(url)
 }
 
 func defaultKubeconfigPath() string {
