@@ -88,7 +88,7 @@ func (cp *DOCloudPather) PersistentVolume(ctx context.Context, name string) (str
 
 	pvClass := pvObj.Spec.StorageClassName
 	if pvClass != "do-block-storage" {
-		return "", fmt.Errorf("PersistentVolume %s is not a DigitalOcean Block Storage Volume. Storage class must be %s but got %s", "do-block-storage", pvClass)
+		return "", fmt.Errorf("PersistentVolume %s is not a DigitalOcean Block Storage Volume. Storage class must be %s but got %s", name, "do-block-storage", pvClass)
 	}
 
 	fmt.Fprintf(cp.output, "PersistentVolume name: %s\n", pvObj.Name)

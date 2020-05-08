@@ -18,6 +18,10 @@ const cloudBase = "https://cloud.digitalocean.com/"
 var errHelp = fmt.Errorf("errHelp")
 
 func main() {
+	run(os.Args)
+}
+
+func run(args []string) {
 	app := &cli.App{
 		Name:  "kubectl-dobrowse",
 		Usage: "a kubectl plugin for opening DigitalOcean resources in a web browser",
@@ -48,7 +52,7 @@ SUPPORTED TYPES:
 		},
 	}
 
-	err := app.Run(os.Args)
+	err := app.Run(args)
 	if err != nil {
 		if err == errHelp {
 			app.Run([]string{"", "help"})
@@ -119,9 +123,6 @@ func cloudPatherWithType(ctx context.Context, cp CloudPather, typ, namespace, na
 	}
 
 	switch typ {
-	case "cluster":
-		return cp.Cluster(ctx)
-
 	case "nodes":
 		fallthrough
 	case "node":
