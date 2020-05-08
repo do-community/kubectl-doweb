@@ -25,6 +25,7 @@ type CloudPather interface {
 const nodeIDPrefix = "digitalocean://"
 const lbaasAnnotation = "kubernetes.digitalocean.com/load-balancer-id"
 const hostnameSuffix = ".k8s.ondigitalocean.com"
+const storageClassName = "do-block-storage"
 
 type DOCloudPather struct {
 	clientConfig *restclient.Config
@@ -87,8 +88,8 @@ func (cp *DOCloudPather) PersistentVolume(ctx context.Context, name string) (str
 	}
 
 	pvClass := pvObj.Spec.StorageClassName
-	if pvClass != "do-block-storage" {
-		return "", fmt.Errorf("PersistentVolume %s is not a DigitalOcean Block Storage Volume. Storage class must be %s but got %s", name, "do-block-storage", pvClass)
+	if pvClass != storageClassName {
+		return "", fmt.Errorf("PersistentVolume %s is not a DigitalOcean Block Storage Volume. Storage class must be %s but got %s", name, storageClassName, pvClass)
 	}
 
 	fmt.Fprintf(cp.output, "PersistentVolume name: %s\n", pvObj.Name)
@@ -99,6 +100,10 @@ func (cp *DOCloudPather) PersistentVolumeClaim(ctx context.Context, namespace, n
 	pvcObj, err := cp.clientset.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
+	}
+
+	if pvcObj.Spec.StorageClassName == nil {
+		return "", fmt.Errorf("no StorageClassName found on PVC Spec")
 	}
 
 	pvcPhase := pvcObj.Status.Phase
