@@ -16,7 +16,7 @@ Usage: `kubectl doweb <resource type> <resource name>`
 
 ## Installation
 
-1. Download the latest release from [the releases page](https://github.com/kamaln7/kubectl-dobrowse/releases).
+1. Download the latest release from [the releases page](https://github.com/do-community/kubectl-dobrowse/releases).
 2. Extract the downloaded archive and move the binary `kubectl-doweb` to any directory in your `$PATH` such as `~/bin` if it exists or `/usr/local/bin`. This allows `kubectl` to detect it as a plugin.
 3. To use, run `kubectl doweb`.
 

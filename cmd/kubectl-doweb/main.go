@@ -18,7 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kamaln7/kubectldoweb"
+	"github.com/do-community/kubectldoweb"
 
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli/v2"

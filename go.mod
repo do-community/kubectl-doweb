@@ -1,4 +1,4 @@
-module github.com/kamaln7/kubectldoweb
+module github.com/do-community/kubectldoweb
 
 go 1.14
 
