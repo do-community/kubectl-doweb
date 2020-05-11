@@ -20,11 +20,11 @@ Usage: `kubectl doweb <resource type> <resource name>`
 2. Extract the downloaded archive and move the binary `kubectl-doweb` to any directory in your `$PATH` such as `~/bin` if it exists or `/usr/local/bin`. This allows `kubectl` to detect it as a plugin.
 3. To use, run `kubectl doweb`.
 
-You can verify that it was installed properly by running `kubectl plugin list` and looking for `kubectl-dobrowse` in the output.
+You can verify that it is installed properly by running `kubectl plugin list` and looking for `kubectl-dobrowse` in the output.
 
 ## Usage
 
-Run `kubectl doweb <type> <name>`. `<type>` being the resource type and `<name>` being the resource name.
+Run `kubectl doweb <type> <name>`,`<type>` being the resource type and `<name>` being the resource name. The supported types are: `cluster, node (no), service (svc), persistentvolume (pv), persistentvolumeclaim (pvc)`.
 
 The default namespace is used. To set a different namespace, use the `--namespace` or `-n` option.
 
