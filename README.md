@@ -14,6 +14,10 @@ Usage: `kubectl doweb <resource type> <resource name>`
 | PersistentVolume      | Prints the Volume name and opens the Volumes page            |
 | PersistentVolumeClaim | If bound, prints the Volume name and opens the Volumes page  |
 
+<p align="center">
+  <a href="https://do.co/kubectl-doweb-demo"><img width="900" src="/demo.png?v=1" alt="screenshot of a video demoing kubectl-doweb"></a>
+</p>
+
 ## Installation
 
 1. Download the latest release from [the releases page](https://github.com/do-community/kubectl-dobrowse/releases).
