@@ -15,7 +15,7 @@ Usage: `kubectl doweb <resource type> <resource name>`
 | PersistentVolumeClaim | If bound, prints the Volume name and opens the Volumes page  |
 
 <p align="center">
-  <a href="https://do.co/kubectl-doweb-demo"><img width="900" src="/demo.png?v=1" alt="screenshot of a video demoing kubectl-doweb"></a>
+  <a href="https://do.co/kubectl-doweb-demo"><img width="450" src="/demo.png?v=2" alt="screenshot of a video demoing kubectl-doweb"></a>
 </p>
 
 ## Installation
